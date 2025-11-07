@@ -101,6 +101,11 @@ class SubmitTestRequest(BaseModel):
     test_id: str
     answers: List[StudentAnswer]
 
+# ===== Basic Routes =====
+@api_router.get("/")
+async def root():
+    return {"message": "Quiz Generator API"}
+
 # ===== Auth Helpers =====
 async def get_current_user(request: Request) -> Optional[User]:
     # Check cookie first, then Authorization header
