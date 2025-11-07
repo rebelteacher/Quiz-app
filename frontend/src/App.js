@@ -158,7 +158,7 @@ function App() {
             path="/teacher/reports/:testId"
             element={
               user && user.role === "teacher" ? (
-                <TestPreview user={user} />
+                <TestReport user={user} />
               ) : (
                 <Navigate to="/" />
               )
