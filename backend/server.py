@@ -344,6 +344,131 @@ Do not include any markdown formatting or explanatory text, just the JSON array.
         raise HTTPException(status_code=500, detail=f"Test generation failed: {str(e)}")
 
 # ===== Test Management Routes =====
+@api_router.put("/tests/{test_id}/publish")
+async def publish_test(test_id: str, teacher: User = Depends(require_teacher)):
+    test = await db.tests.find_one({"id": test_id})
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+    if test["teacher_id"] != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    await db.tests.update_one({"id": test_id}, {"$set": {"status": "published"}})
+    return {"message": "Test published"}
+
+@api_router.delete("/tests/{test_id}/questions/{question_id}")
+async def delete_question(test_id: str, question_id: str, teacher: User = Depends(require_teacher)):
+    test = await db.tests.find_one({"id": test_id})
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+    if test["teacher_id"] != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Remove question from array
+    questions = [q for q in test["questions"] if q["id"] != question_id]
+    await db.tests.update_one({"id": test_id}, {"$set": {"questions": questions}})
+    return {"message": "Question deleted"}
+
+@api_router.post("/tests/{test_id}/generate-more")
+async def generate_more_questions(
+    test_id: str,
+    request: Request,
+    num_questions: int = File(5),
+    file: Optional[UploadFile] = File(None),
+    teacher: User = Depends(require_teacher)
+):
+    test = await db.tests.find_one({"id": test_id}, {"_id": 0})
+    if not test:
+        raise HTTPException(status_code=404, detail="Test not found")
+    if test["teacher_id"] != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    try:
+        # Initialize LLM chat
+        chat = LlmChat(
+            api_key=EMERGENT_LLM_KEY,
+            session_id=f"test-gen-more-{uuid.uuid4()}",
+            system_message="You are an expert educational content creator. Generate high-quality multiple choice questions based on the provided resources."
+        ).with_model("gemini", "gemini-2.0-flash")
+        
+        # Get existing standards
+        existing_standards = list(set([q["standard"] for q in test["questions"]]))
+        standards_text = ", ".join(existing_standards) if existing_standards else "relevant educational standards"
+        
+        # Prepare prompt
+        prompt = f\"\"\"Create {num_questions} NEW multiple choice questions based on the following resource:
+
+Resource Description: {test["resource_description"]}
+Standards to cover: {standards_text}
+
+IMPORTANT: Generate questions that are DIFFERENT from these existing topics that are already covered in the test.
+
+For each question:
+1. Write a clear, appropriate-level question
+2. Provide exactly 4 answer options
+3. Indicate which option is correct (0-3)
+4. Tag with the relevant standard
+
+Return ONLY a valid JSON array with this exact structure:
+[
+  {{
+    "question_text": "Question here?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correct_answer": 0,
+    "standard": "Standard code"
+  }}
+]
+
+Do not include any markdown formatting or explanatory text, just the JSON array.\"\"\"
+        
+        # If file is uploaded, include it
+        file_contents = None
+        if file:
+            temp_path = f"/tmp/{file.filename}"
+            with open(temp_path, "wb") as f:
+                content = await file.read()
+                f.write(content)
+            
+            mime_type = file.content_type or "application/octet-stream"
+            if file.filename.endswith('.pdf'):
+                mime_type = "application/pdf"
+            elif file.filename.endswith('.txt'):
+                mime_type = "text/plain"
+            elif file.filename.endswith('.csv'):
+                mime_type = "text/csv"
+            
+            file_contents = [FileContentWithMimeType(
+                file_path=temp_path,
+                mime_type=mime_type
+            )]
+        
+        # Send message to LLM
+        user_message = UserMessage(text=prompt, file_contents=file_contents if file_contents else None)
+        response = await chat.send_message(user_message)
+        
+        # Parse response
+        response_text = response.strip()
+        if response_text.startswith('```'):
+            response_text = response_text.split('```')[1]
+            if response_text.startswith('json'):
+                response_text = response_text[4:]
+        response_text = response_text.strip()
+        
+        new_questions_data = json.loads(response_text)
+        new_questions = [Question(**q) for q in new_questions_data]
+        
+        # Add new questions to existing ones
+        all_questions = test["questions"] + [q.model_dump() for q in new_questions]
+        await db.tests.update_one({"id": test_id}, {"$set": {"questions": all_questions}})
+        
+        # Return updated test
+        updated_test = await db.tests.find_one({"id": test_id}, {"_id": 0})
+        return updated_test
+        
+    except json.JSONDecodeError as e:
+        raise HTTPException(status_code=500, detail=f"Failed to parse AI response: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate more questions: {str(e)}")
+
 @api_router.get("/tests")
 async def get_tests(user: User = Depends(require_auth)):
     if user.role == "teacher":
