@@ -549,6 +549,8 @@ async def assign_test(req: AssignTestRequest, teacher: User = Depends(require_te
         raise HTTPException(status_code=404, detail="Test not found")
     if test["teacher_id"] != teacher.id:
         raise HTTPException(status_code=403, detail="Not authorized")
+    if test.get("status") != "published":
+        raise HTTPException(status_code=400, detail="Cannot assign draft test. Please publish it first.")
     
     # Create or update assignment
     existing = await db.assignments.find_one({"test_id": req.test_id})
