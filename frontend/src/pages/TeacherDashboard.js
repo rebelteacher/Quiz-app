@@ -10,8 +10,6 @@ const TeacherDashboard = ({ user, logout }) => {
   const navigate = useNavigate();
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [selectedTest, setSelectedTest] = useState(null);
-  const [submissions, setSubmissions] = useState([]);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignTestId, setAssignTestId] = useState(null);
   const [studentEmails, setStudentEmails] = useState("");
