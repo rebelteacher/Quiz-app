@@ -223,18 +223,46 @@ const TeacherDashboard = ({ user, logout }) => {
           }} onClick={(e) => e.stopPropagation()} data-testid="assign-modal">
             <h2 style={{ marginBottom: "1rem" }}>Assign Test</h2>
             <p style={{ color: "#718096", marginBottom: "1.5rem", fontSize: "0.875rem" }}>
-              Enter student email addresses separated by commas
+              Select classes to assign this test to
             </p>
             <div className="form-group">
-              <label>Student Emails</label>
-              <textarea
-                className="form-textarea"
-                value={studentEmails}
-                onChange={(e) => setStudentEmails(e.target.value)}
-                placeholder="student1@example.com, student2@example.com"
-                rows={4}
-                data-testid="student-emails-input"
-              />
+              <label>Select Classes</label>
+              {classes.length === 0 ? (
+                <p style={{ color: "#718096", fontSize: "0.875rem", padding: "1rem", background: "#f7fafc", borderRadius: "8px" }}>
+                  No classes yet. Create a class first!
+                </p>
+              ) : (
+                <div style={{ display: "grid", gap: "0.75rem", maxHeight: "300px", overflowY: "auto" }}>
+                  {classes.map((cls) => (
+                    <div
+                      key={cls.id}
+                      onClick={() => toggleClassSelection(cls.id)}
+                      style={{
+                        padding: "1rem",
+                        border: "2px solid",
+                        borderColor: selectedClassIds.includes(cls.id) ? "#ff8c42" : "#e2e8f0",
+                        background: selectedClassIds.includes(cls.id) ? "#fff5f0" : "white",
+                        borderRadius: "12px",
+                        cursor: "pointer",
+                        transition: "all 0.2s"
+                      }}
+                      data-testid={`class-option-${cls.id}`}
+                    >
+                      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                        <div>
+                          <div style={{ fontWeight: "600", color: "#2d3748" }}>{cls.name}</div>
+                          <div style={{ fontSize: "0.875rem", color: "#718096" }}>
+                            {cls.student_count} students
+                          </div>
+                        </div>
+                        {selectedClassIds.includes(cls.id) && (
+                          <div style={{ color: "#ff8c42", fontSize: "1.5rem" }}>✓</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
               <button className="btn btn-secondary" onClick={() => setShowAssignModal(false)} data-testid="cancel-assign-btn">
