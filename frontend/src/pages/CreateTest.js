@@ -49,8 +49,8 @@ const CreateTest = ({ user }) => {
         }
       });
       
-      toast.success("Test created successfully!");
-      navigate("/teacher");
+      toast.success("Test generated! Review and publish when ready.");
+      navigate(`/teacher/preview/${response.data.id}`);
     } catch (e) {
       console.error(e);
       toast.error(e.response?.data?.detail || "Failed to generate test. Please try again.");
