@@ -19,6 +19,7 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
     // Show role selector if role not set properly
     if (!user.role || user.role === "student") {
       fetchTests();
+      fetchMyClasses();
     }
   }, []);
 
