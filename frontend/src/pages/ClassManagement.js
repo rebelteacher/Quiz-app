@@ -14,7 +14,7 @@ const ClassManagement = ({ user }) => {
   const [editingClass, setEditingClass] = useState(null);
   const [className, setClassName] = useState("");
   const [classDescription, setClassDescription] = useState("");
-  const [studentEmails, setStudentEmails] = useState("");
+  const [selectedClass, setSelectedClass] = useState(null);
 
   useEffect(() => {
     fetchClasses();
@@ -35,7 +35,6 @@ const ClassManagement = ({ user }) => {
     setEditingClass(null);
     setClassName("");
     setClassDescription("");
-    setStudentEmails("");
     setShowModal(true);
   };
 
@@ -43,7 +42,6 @@ const ClassManagement = ({ user }) => {
     setEditingClass(classObj);
     setClassName(classObj.name);
     setClassDescription(classObj.description || "");
-    setStudentEmails(classObj.student_emails.join(", "));
     setShowModal(true);
   };
 
@@ -53,26 +51,19 @@ const ClassManagement = ({ user }) => {
       return;
     }
 
-    const emails = studentEmails
-      .split(",")
-      .map((e) => e.trim())
-      .filter((e) => e);
-
     try {
       if (editingClass) {
         await axios.put(`${API}/classes/${editingClass.id}`, {
           name: className,
           description: classDescription,
-          student_emails: emails,
         });
         toast.success("Class updated");
       } else {
         await axios.post(`${API}/classes`, {
           name: className,
           description: classDescription,
-          student_emails: emails,
         });
-        toast.success("Class created");
+        toast.success("Class created! Share the class code with students.");
       }
       setShowModal(false);
       fetchClasses();
@@ -82,7 +73,7 @@ const ClassManagement = ({ user }) => {
   };
 
   const handleDeleteClass = async (classId) => {
-    if (!window.confirm("Delete this class? This won't delete students.")) return;
+    if (!window.confirm("Delete this class? This won't remove students from the system.")) return;
 
     try {
       await axios.delete(`${API}/classes/${classId}`);
@@ -93,10 +84,104 @@ const ClassManagement = ({ user }) => {
     }
   };
 
+  const viewClassDetails = async (classObj) => {
+    try {
+      const response = await axios.get(`${API}/classes/${classObj.id}`);
+      setSelectedClass(response.data);
+    } catch (e) {
+      toast.error("Failed to load class details");
+    }
+  };
+
+  const copyClassCode = (code) => {
+    navigator.clipboard.writeText(code);
+    toast.success("Class code copied to clipboard!");
+  };
+
   if (loading) {
     return (
       <div className="loading-screen">
         <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+
+  if (selectedClass) {
+    return (
+      <div className="dashboard" data-testid="class-details-page">
+        <div className="dashboard-header">
+          <div className="header-left">
+            <h1>{selectedClass.name}</h1>
+            <p>{selectedClass.students?.length || 0} students enrolled</p>
+          </div>
+          <div className="header-right">
+            <button className="btn btn-secondary" onClick={() => setSelectedClass(null)} data-testid="back-btn">
+              ← Back
+            </button>
+          </div>
+        </div>
+
+        <div style={{ maxWidth: "800px", margin: "0 auto" }}>
+          {/* Class Code Card */}
+          <div style={{ background: "white", padding: "2rem", borderRadius: "16px", boxShadow: "0 4px 15px rgba(0,0,0,0.08)", marginBottom: "2rem", textAlign: "center" }}>
+            <h3 style={{ fontSize: "1rem", color: "#718096", marginBottom: "1rem" }}>Class Code</h3>
+            <div
+              onClick={() => copyClassCode(selectedClass.class_code)}
+              style={{
+                display: "inline-block",
+                padding: "1rem 2rem",
+                background: "linear-gradient(135deg, #ff8c42 0%, #ff6b9d 100%)",
+                color: "white",
+                fontSize: "2rem",
+                fontWeight: "700",
+                borderRadius: "12px",
+                cursor: "pointer",
+                letterSpacing: "0.2em",
+                transition: "transform 0.2s"
+              }}
+              onMouseEnter={(e) => e.currentTarget.style.transform = "scale(1.05)"}
+              onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
+              data-testid="class-code"
+            >
+              {selectedClass.class_code}
+            </div>
+            <p style={{ fontSize: "0.875rem", color: "#718096", marginTop: "1rem" }}>
+              Click to copy • Share this code with students
+            </p>
+          </div>
+
+          {/* Students List */}
+          <div style={{ background: "white", padding: "2rem", borderRadius: "16px", boxShadow: "0 4px 15px rgba(0,0,0,0.08)" }}>
+            <h3 style={{ marginBottom: "1.5rem" }}>Enrolled Students</h3>
+            {selectedClass.students?.length === 0 ? (
+              <p style={{ color: "#718096", textAlign: "center", padding: "2rem" }}>
+                No students enrolled yet. Share the class code with your students!
+              </p>
+            ) : (
+              <div style={{ display: "grid", gap: "1rem" }}>
+                {selectedClass.students?.map((student) => (
+                  <div
+                    key={student.id}
+                    style={{
+                      padding: "1rem",
+                      border: "2px solid #e2e8f0",
+                      borderRadius: "12px",
+                      display: "flex",
+                      justifyContent: "space-between",
+                      alignItems: "center"
+                    }}
+                    data-testid={`student-${student.id}`}
+                  >
+                    <div>
+                      <div style={{ fontWeight: "600", color: "#2d3748" }}>{student.name}</div>
+                      <div style={{ fontSize: "0.875rem", color: "#718096" }}>{student.email}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
       </div>
     );
   }
@@ -106,7 +191,7 @@ const ClassManagement = ({ user }) => {
       <div className="dashboard-header">
         <div className="header-left">
           <h1>Class Management</h1>
-          <p>Organize your students into classes</p>
+          <p>Create classes and get codes for students to join</p>
         </div>
         <div className="header-right">
           <button className="btn btn-primary" onClick={openCreateModal} data-testid="create-class-btn">
@@ -122,7 +207,7 @@ const ClassManagement = ({ user }) => {
         <div className="empty-state" data-testid="no-classes">
           <div className="empty-icon">🎓</div>
           <h3>No Classes Yet</h3>
-          <p>Create your first class to organize students</p>
+          <p>Create your first class to get started</p>
           <button className="btn btn-primary" onClick={openCreateModal}>
             Create Class
           </button>
@@ -130,9 +215,15 @@ const ClassManagement = ({ user }) => {
       ) : (
         <div className="tests-grid">
           {classes.map((cls) => (
-            <div key={cls.id} className="test-card" data-testid={`class-card-${cls.id}`}>
+            <div
+              key={cls.id}
+              className="test-card"
+              onClick={() => viewClassDetails(cls)}
+              data-testid={`class-card-${cls.id}`}
+            >
               <div className="test-card-header">
                 <h3>{cls.name}</h3>
+                <span className="test-badge badge-complete">{cls.class_code}</span>
               </div>
               <p>{cls.description || "No description"}</p>
               <div className="test-meta">
@@ -141,14 +232,30 @@ const ClassManagement = ({ user }) => {
               <div className="test-actions">
                 <button
                   className="btn btn-primary btn-sm"
-                  onClick={() => openEditModal(cls)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    viewClassDetails(cls);
+                  }}
+                  data-testid={`view-class-btn-${cls.id}`}
+                >
+                  View Details
+                </button>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openEditModal(cls);
+                  }}
                   data-testid={`edit-class-btn-${cls.id}`}
                 >
                   Edit
                 </button>
                 <button
                   className="btn btn-secondary btn-sm"
-                  onClick={() => handleDeleteClass(cls.id)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleDeleteClass(cls.id);
+                  }}
                   data-testid={`delete-class-btn-${cls.id}`}
                 >
                   Delete
@@ -209,20 +316,11 @@ const ClassManagement = ({ user }) => {
                 data-testid="class-description-input"
               />
             </div>
-            <div className="form-group">
-              <label>Student Emails</label>
-              <textarea
-                className="form-textarea"
-                value={studentEmails}
-                onChange={(e) => setStudentEmails(e.target.value)}
-                placeholder="student1@example.com, student2@example.com"
-                rows={4}
-                data-testid="class-students-input"
-              />
-              <p style={{ fontSize: "0.75rem", color: "#718096", marginTop: "0.5rem" }}>
-                Separate emails with commas
+            {!editingClass && (
+              <p style={{ fontSize: "0.875rem", color: "#718096", marginBottom: "1rem", background: "#f7fafc", padding: "1rem", borderRadius: "8px" }}>
+                💡 A unique class code will be generated. Share it with students so they can join!
               </p>
-            </div>
+            )}
             <div style={{ display: "flex", gap: "1rem", justifyContent: "flex-end" }}>
               <button className="btn btn-secondary" onClick={() => setShowModal(false)} data-testid="cancel-btn">
                 Cancel
