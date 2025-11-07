@@ -145,6 +145,36 @@ function App() {
             }
           />
           <Route
+            path="/teacher/classes"
+            element={
+              user && user.role === "teacher" ? (
+                <ClassManagement user={user} />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+          <Route
+            path="/teacher/reports/:testId"
+            element={
+              user && user.role === "teacher" ? (
+                <TestPreview user={user} />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+          <Route
+            path="/teacher/reports/student/:studentId"
+            element={
+              user && user.role === "teacher" ? (
+                <StudentReport user={user} />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+          <Route
             path="/test/:testId"
             element={
               user ? <TakeTest user={user} /> : <Navigate to="/" />
