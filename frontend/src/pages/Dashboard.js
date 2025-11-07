@@ -36,6 +36,35 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
 
   const fetchMyClasses = async () => {
     try {
+      const response = await axios.get(`${API}/classes/student/my-classes`);
+      setMyClasses(response.data);
+    } catch (e) {
+      console.error("Failed to load classes", e);
+    }
+  };
+
+  const handleJoinClass = async () => {
+    if (!classCode.trim()) {
+      toast.error("Please enter a class code");
+      return;
+    }
+
+    try {
+      await axios.post(`${API}/classes/join`, {
+        class_code: classCode.toUpperCase()
+      });
+      toast.success("Successfully joined class!");
+      setShowJoinModal(false);
+      setClassCode("");
+      fetchMyClasses();
+      fetchTests();
+    } catch (e) {
+      toast.error(e.response?.data?.detail || "Failed to join class");
+    }
+  };
+
+  const fetchMyClasses = async () => {
+    try {
       const response = await axios.get(`${API}/classes/my`);
       setMyClasses(response.data);
     } catch (e) {
