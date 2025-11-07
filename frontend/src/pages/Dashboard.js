@@ -226,6 +226,52 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
           ))}
         </div>
       )}
+
+      {/* Join Class Modal */}
+      {showJoinModal && (
+        <div className="modal-overlay" onClick={() => setShowJoinModal(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h3>Join a Class</h3>
+              <button 
+                className="modal-close" 
+                onClick={() => setShowJoinModal(false)}
+                data-testid="close-join-modal"
+              >
+                ×
+              </button>
+            </div>
+            <div className="modal-body">
+              <p>Enter the class code provided by your teacher:</p>
+              <input
+                type="text"
+                placeholder="Enter class code"
+                value={classCode}
+                onChange={(e) => setClassCode(e.target.value.toUpperCase())}
+                className="form-input"
+                data-testid="class-code-input"
+                style={{ textTransform: "uppercase" }}
+              />
+            </div>
+            <div className="modal-footer">
+              <button 
+                className="btn btn-secondary" 
+                onClick={() => setShowJoinModal(false)}
+                data-testid="cancel-join-btn"
+              >
+                Cancel
+              </button>
+              <button 
+                className="btn btn-primary" 
+                onClick={handleJoinClass}
+                data-testid="confirm-join-btn"
+              >
+                Join Class
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
