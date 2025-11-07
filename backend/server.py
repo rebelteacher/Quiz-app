@@ -495,8 +495,12 @@ async def get_tests(user: User = Depends(require_auth)):
     if user.role == "teacher":
         tests = await db.tests.find({"teacher_id": user.id}, {"_id": 0}).to_list(1000)
     else:
-        # Get assigned tests for student (only published ones)
-        assignments = await db.assignments.find({"student_emails": user.email}, {"_id": 0}).to_list(1000)
+        # Get classes student is in
+        my_classes = await db.classes.find({"student_ids": user.id}, {"_id": 0, "id": 1}).to_list(1000)
+        class_ids = [c["id"] for c in my_classes]
+        
+        # Get assigned tests for those classes (only published ones)
+        assignments = await db.assignments.find({"class_ids": {"$in": class_ids}}, {"_id": 0}).to_list(1000)
         test_ids = [a["test_id"] for a in assignments]
         tests = await db.tests.find({"id": {"$in": test_ids}, "status": "published"}, {"_id": 0}).to_list(1000)
     
