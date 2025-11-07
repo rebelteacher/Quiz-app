@@ -148,6 +148,13 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
             </div>
           </div>
           <button 
+            className="btn btn-primary" 
+            onClick={() => setShowJoinModal(true)}
+            data-testid="join-class-btn"
+          >
+            + Join Class
+          </button>
+          <button 
             className="btn btn-secondary" 
             onClick={() => setShowRoleSelector(true)}
             data-testid="switch-role-btn"
@@ -159,6 +166,31 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
           </button>
         </div>
       </div>
+
+      {/* My Classes Section */}
+      {myClasses.length > 0 && (
+        <div style={{ marginBottom: "2rem" }}>
+          <h2 style={{ fontSize: "1.25rem", marginBottom: "1rem", color: "#2d3748" }}>My Classes</h2>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem" }}>
+            {myClasses.map((cls) => (
+              <div
+                key={cls.id}
+                style={{
+                  background: "white",
+                  padding: "1rem 1.5rem",
+                  borderRadius: "12px",
+                  boxShadow: "0 2px 10px rgba(0,0,0,0.08)",
+                  border: "2px solid #e2e8f0"
+                }}
+                data-testid={`my-class-${cls.id}`}
+              >
+                <div style={{ fontWeight: "600", color: "#2d3748", marginBottom: "0.25rem" }}>{cls.name}</div>
+                <div style={{ fontSize: "0.75rem", color: "#718096" }}>Teacher: {cls.teacher_name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {loading ? (
         <div className="loading-screen">
