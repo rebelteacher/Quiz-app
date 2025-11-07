@@ -17,6 +17,7 @@ const TeacherDashboard = ({ user, logout }) => {
 
   useEffect(() => {
     fetchTests();
+    fetchClasses();
   }, []);
 
   const fetchTests = async () => {
