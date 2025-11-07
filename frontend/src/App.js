@@ -132,6 +132,16 @@ function App() {
             }
           />
           <Route
+            path="/teacher/preview/:testId"
+            element={
+              user && user.role === "teacher" ? (
+                <TestPreview user={user} />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+          <Route
             path="/test/:testId"
             element={
               user ? <TakeTest user={user} /> : <Navigate to="/" />
