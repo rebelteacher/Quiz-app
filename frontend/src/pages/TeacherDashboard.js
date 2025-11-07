@@ -250,28 +250,43 @@ const TeacherDashboard = ({ user, logout }) => {
             <div key={test.id} className="test-card" data-testid={`teacher-test-card-${test.id}`}>
               <div className="test-card-header">
                 <h3>{test.title}</h3>
+                <span className={`test-badge ${test.status === 'published' ? 'badge-complete' : 'badge-pending'}`}>
+                  {test.status === 'published' ? 'Published' : 'Draft'}
+                </span>
               </div>
               <p>{test.resource_description}</p>
               <div className="test-meta">
                 <span>📋 {test.questions.length} questions</span>
               </div>
               <div className="test-actions">
+                {test.status === 'draft' ? (
+                  <button 
+                    className="btn btn-primary btn-sm" 
+                    onClick={(e) => { e.stopPropagation(); navigate(`/teacher/preview/${test.id}`); }}
+                    data-testid={`edit-test-btn-${test.id}`}
+                  >
+                    Edit & Publish
+                  </button>
+                ) : (
+                  <>
+                    <button 
+                      className="btn btn-primary btn-sm" 
+                      onClick={(e) => openAssignModal(test.id, e)}
+                      data-testid={`assign-test-btn-${test.id}`}
+                    >
+                      Assign
+                    </button>
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={(e) => handleViewResults(test.id, e)}
+                      data-testid={`view-results-btn-${test.id}`}
+                    >
+                      Results
+                    </button>
+                  </>
+                )}
                 <button 
-                  className="btn btn-primary" 
-                  onClick={(e) => openAssignModal(test.id, e)}
-                  data-testid={`assign-test-btn-${test.id}`}
-                >
-                  Assign
-                </button>
-                <button 
-                  className="btn btn-secondary" 
-                  onClick={(e) => handleViewResults(test.id, e)}
-                  data-testid={`view-results-btn-${test.id}`}
-                >
-                  Results
-                </button>
-                <button 
-                  className="btn btn-secondary" 
+                  className="btn btn-secondary btn-sm" 
                   onClick={(e) => handleDeleteTest(test.id, e)}
                   data-testid={`delete-test-btn-${test.id}`}
                 >
