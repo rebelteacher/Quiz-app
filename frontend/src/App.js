@@ -9,6 +9,7 @@ import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import CreateTest from "./pages/CreateTest";
+import TestPreview from "./pages/TestPreview";
 import TakeTest from "./pages/TakeTest";
 import TestResults from "./pages/TestResults";
 
