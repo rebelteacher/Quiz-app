@@ -12,7 +12,8 @@ const TeacherDashboard = ({ user, logout }) => {
   const [loading, setLoading] = useState(true);
   const [showAssignModal, setShowAssignModal] = useState(false);
   const [assignTestId, setAssignTestId] = useState(null);
-  const [studentEmails, setStudentEmails] = useState("");
+  const [classes, setClasses] = useState([]);
+  const [selectedClassIds, setSelectedClassIds] = useState([]);
 
   useEffect(() => {
     fetchTests();
