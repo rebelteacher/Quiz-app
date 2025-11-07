@@ -66,10 +66,10 @@ const TeacherDashboard = ({ user, logout }) => {
     // Load existing assignment
     axios.get(`${API}/assignments/${testId}`)
       .then(response => {
-        setStudentEmails(response.data.student_emails.join(", "));
+        setSelectedClassIds(response.data.class_ids || []);
       })
       .catch(() => {
-        setStudentEmails("");
+        setSelectedClassIds([]);
       });
     
     setShowAssignModal(true);
