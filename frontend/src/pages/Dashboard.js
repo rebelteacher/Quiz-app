@@ -63,15 +63,6 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
     }
   };
 
-  const fetchMyClasses = async () => {
-    try {
-      const response = await axios.get(`${API}/classes/my`);
-      setMyClasses(response.data);
-    } catch (e) {
-      toast.error("Failed to load classes");
-    }
-  };
-
   const handleRoleChange = async (role) => {
     try {
       await axios.post(`${API}/auth/set-role?role=${role}`);
