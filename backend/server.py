@@ -603,11 +603,19 @@ async def get_assignment(test_id: str, teacher: User = Depends(require_teacher))
 # ===== Class Management Routes =====
 @api_router.post("/classes")
 async def create_class(req: CreateClassRequest, teacher: User = Depends(require_teacher)):
+    # Generate unique class code
+    while True:
+        class_code = ''.join(random.choices('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', k=6))
+        existing = await db.classes.find_one({"class_code": class_code})
+        if not existing:
+            break
+    
     class_obj = Class(
         teacher_id=teacher.id,
         name=req.name,
         description=req.description,
-        student_emails=req.student_emails
+        class_code=class_code,
+        student_ids=[]
     )
     
     class_dict = class_obj.model_dump()
