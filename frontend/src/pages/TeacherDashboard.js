@@ -31,6 +31,15 @@ const TeacherDashboard = ({ user, logout }) => {
     }
   };
 
+  const fetchClasses = async () => {
+    try {
+      const response = await axios.get(`${API}/classes`);
+      setClasses(response.data);
+    } catch (e) {
+      toast.error("Failed to load classes");
+    }
+  };
+
   const handleDeleteTest = async (testId, e) => {
     e.stopPropagation();
     if (!window.confirm("Are you sure you want to delete this test?")) return;
