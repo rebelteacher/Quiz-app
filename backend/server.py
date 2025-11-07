@@ -63,6 +63,7 @@ class Test(BaseModel):
     teacher_id: str
     resource_description: str
     questions: List[Question]
+    status: str = "draft"  # "draft" or "published"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class Assignment(BaseModel):
