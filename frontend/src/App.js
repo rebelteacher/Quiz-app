@@ -10,6 +10,9 @@ import Dashboard from "./pages/Dashboard";
 import TeacherDashboard from "./pages/TeacherDashboard";
 import CreateTest from "./pages/CreateTest";
 import TestPreview from "./pages/TestPreview";
+import ClassManagement from "./pages/ClassManagement";
+import TestReport from "./pages/TestReport";
+import StudentReport from "./pages/StudentReport";
 import TakeTest from "./pages/TakeTest";
 import TestResults from "./pages/TestResults";
 
