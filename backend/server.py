@@ -533,8 +533,10 @@ async def get_test_for_taking(test_id: str, user: User = Depends(require_auth)):
     if not test:
         raise HTTPException(status_code=404, detail="Test not found")
     
-    # Check if student is assigned
-    assignment = await db.assignments.find_one({"test_id": test_id, "student_emails": user.email})
+    # Check if student is assigned (check if student is in any class that has this test)
+    my_classes = await db.classes.find({"student_ids": user.id}, {"_id": 0, "id": 1}).to_list(1000)
+    class_ids = [c["id"] for c in my_classes]
+    assignment = await db.assignments.find_one({"test_id": test_id, "class_ids": {"$in": class_ids}})
     if not assignment:
         raise HTTPException(status_code=403, detail="Not authorized")
     
