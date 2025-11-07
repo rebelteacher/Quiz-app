@@ -665,14 +665,44 @@ async def update_class(class_id: str, req: UpdateClassRequest, teacher: User = D
         update_data['name'] = req.name
     if req.description is not None:
         update_data['description'] = req.description
-    if req.student_emails is not None:
-        update_data['student_emails'] = req.student_emails
     
     if update_data:
         await db.classes.update_one({"id": class_id}, {"$set": update_data})
     
     updated_class = await db.classes.find_one({"id": class_id}, {"_id": 0})
     return updated_class
+
+@api_router.post("/classes/join")
+async def join_class(req: JoinClassRequest, user: User = Depends(require_auth)):
+    # Find class by code
+    class_obj = await db.classes.find_one({"class_code": req.class_code.upper()})
+    if not class_obj:
+        raise HTTPException(status_code=404, detail="Invalid class code")
+    
+    # Check if already in class
+    if user.id in class_obj.get('student_ids', []):
+        return {"message": "Already enrolled in this class", "class": class_obj}
+    
+    # Add student to class
+    await db.classes.update_one(
+        {"id": class_obj["id"]},
+        {"$addToSet": {"student_ids": user.id}}
+    )
+    
+    updated_class = await db.classes.find_one({"id": class_obj["id"]}, {"_id": 0})
+    return {"message": "Successfully joined class", "class": updated_class}
+
+@api_router.get("/classes/student/my-classes")
+async def get_my_classes(user: User = Depends(require_auth)):
+    """Get all classes the student is enrolled in"""
+    classes = await db.classes.find({"student_ids": user.id}, {"_id": 0}).to_list(1000)
+    
+    # Enrich with teacher info
+    for cls in classes:
+        teacher = await db.users.find_one({"id": cls["teacher_id"]}, {"_id": 0, "name": 1, "email": 1})
+        cls['teacher_name'] = teacher.get("name", "Unknown") if teacher else "Unknown"
+    
+    return classes
 
 @api_router.delete("/classes/{class_id}")
 async def delete_class(class_id: str, teacher: User = Depends(require_teacher)):
