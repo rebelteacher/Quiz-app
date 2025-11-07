@@ -44,15 +44,9 @@ const TeacherDashboard = ({ user, logout }) => {
     }
   };
 
-  const handleViewResults = async (testId, e) => {
+  const handleViewResults = (testId, e) => {
     e.stopPropagation();
-    try {
-      const response = await axios.get(`${API}/submissions/test/${testId}`);
-      setSubmissions(response.data);
-      setSelectedTest(tests.find(t => t.id === testId));
-    } catch (e) {
-      toast.error("Failed to load submissions");
-    }
+    navigate(`/teacher/reports/${testId}`);
   };
 
   const openAssignModal = (testId, e) => {
