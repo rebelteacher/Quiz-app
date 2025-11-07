@@ -93,7 +93,8 @@ class Class(BaseModel):
     teacher_id: str
     name: str
     description: Optional[str] = None
-    student_emails: List[str] = []
+    class_code: str = Field(default_factory=lambda: ''.join(random.choices('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', k=6)))
+    student_ids: List[str] = []
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class CreateClassRequest(BaseModel):
