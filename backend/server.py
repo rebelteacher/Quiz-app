@@ -100,12 +100,13 @@ class Class(BaseModel):
 class CreateClassRequest(BaseModel):
     name: str
     description: Optional[str] = None
-    student_emails: List[str] = []
 
 class UpdateClassRequest(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    student_emails: Optional[List[str]] = None
+
+class JoinClassRequest(BaseModel):
+    class_code: str
 
 # Request/Response Models
 class GenerateTestRequest(BaseModel):
