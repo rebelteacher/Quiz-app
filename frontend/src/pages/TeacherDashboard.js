@@ -14,6 +14,7 @@ const TeacherDashboard = ({ user, logout }) => {
   const [assignTestId, setAssignTestId] = useState(null);
   const [classes, setClasses] = useState([]);
   const [selectedClassIds, setSelectedClassIds] = useState([]);
+  const [studentEmails, setStudentEmails] = useState("");
 
   useEffect(() => {
     fetchTests();
