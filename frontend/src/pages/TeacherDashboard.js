@@ -222,6 +222,9 @@ const TeacherDashboard = ({ user, logout }) => {
               <div style={{ fontSize: "0.75rem", color: "#718096" }}>Teacher</div>
             </div>
           </div>
+          <button className="btn btn-secondary" onClick={() => navigate("/teacher/classes")} data-testid="classes-btn">
+            Classes
+          </button>
           <button className="btn btn-primary" onClick={() => navigate("/teacher/create")} data-testid="create-test-btn">
             + Create Test
           </button>
