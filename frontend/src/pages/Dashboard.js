@@ -11,6 +11,9 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showRoleSelector, setShowRoleSelector] = useState(false);
+  const [showJoinModal, setShowJoinModal] = useState(false);
+  const [classCode, setClassCode] = useState("");
+  const [myClasses, setMyClasses] = useState([]);
 
   useEffect(() => {
     // Show role selector if role not set properly
