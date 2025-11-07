@@ -76,25 +76,31 @@ const TeacherDashboard = ({ user, logout }) => {
   };
 
   const handleAssignTest = async () => {
-    if (!studentEmails.trim()) {
-      toast.error("Please enter at least one student email");
+    if (selectedClassIds.length === 0) {
+      toast.error("Please select at least one class");
       return;
     }
-    
-    const emails = studentEmails.split(",").map(e => e.trim()).filter(e => e);
     
     try {
       await axios.post(`${API}/assignments`, {
         test_id: assignTestId,
-        student_emails: emails
+        class_ids: selectedClassIds
       });
-      toast.success("Test assigned successfully");
+      toast.success("Test assigned to selected classes");
       setShowAssignModal(false);
       setAssignTestId(null);
-      setStudentEmails("");
+      setSelectedClassIds([]);
     } catch (e) {
-      toast.error("Failed to assign test");
+      toast.error(e.response?.data?.detail || "Failed to assign test");
     }
+  };
+
+  const toggleClassSelection = (classId) => {
+    setSelectedClassIds(prev => 
+      prev.includes(classId) 
+        ? prev.filter(id => id !== classId)
+        : [...prev, classId]
+    );
   };
 
   return (
