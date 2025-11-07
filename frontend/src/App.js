@@ -1,50 +1,147 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import "@/App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import axios from "axios";
+import { Toaster, toast } from "sonner";
+
+// Import pages
+import LandingPage from "./pages/LandingPage";
+import Dashboard from "./pages/Dashboard";
+import TeacherDashboard from "./pages/TeacherDashboard";
+import CreateTest from "./pages/CreateTest";
+import TakeTest from "./pages/TakeTest";
+import TestResults from "./pages/TestResults";
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
+function App() {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    checkAuth();
+  }, []);
+
+  const checkAuth = async () => {
+    // Check for session_id in URL fragment
+    const fragment = window.location.hash;
+    if (fragment.includes("session_id=")) {
+      const sessionId = fragment.split("session_id=")[1].split("&")[0];
+      await processSessionId(sessionId);
+      // Clean URL
+      window.location.hash = "";
+      return;
+    }
+
+    // Check existing session
     try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
+      const response = await axios.get(`${API}/auth/me`);
+      setUser(response.data);
     } catch (e) {
-      console.error(e, `errored out requesting / api`);
+      // Not authenticated
+    } finally {
+      setLoading(false);
     }
   };
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+  const processSessionId = async (sessionId) => {
+    try {
+      const response = await axios.post(
+        `${API}/auth/session`,
+        {},
+        { headers: { "X-Session-ID": sessionId } }
+      );
+      setUser(response.data);
+      toast.success(`Welcome, ${response.data.name}!`);
+    } catch (e) {
+      toast.error("Authentication failed");
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
-    </div>
-  );
-};
+  const logout = async () => {
+    try {
+      await axios.post(`${API}/auth/logout`);
+      setUser(null);
+      toast.success("Logged out successfully");
+    } catch (e) {
+      toast.error("Logout failed");
+    }
+  };
 
-function App() {
+  const updateUserRole = (role) => {
+    setUser({ ...user, role });
+  };
+
+  if (loading) {
+    return (
+      <div className="loading-screen" data-testid="loading-screen">
+        <div className="loading-spinner"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="App">
+      <Toaster position="top-center" richColors />
       <BrowserRouter>
         <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
+          <Route
+            path="/"
+            element={
+              user ? (
+                <Navigate
+                  to={user.role === "teacher" ? "/teacher" : "/dashboard"}
+                />
+              ) : (
+                <LandingPage />
+              )
+            }
+          />
+          <Route
+            path="/dashboard"
+            element={
+              user ? (
+                <Dashboard user={user} logout={logout} updateUserRole={updateUserRole} />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+          <Route
+            path="/teacher"
+            element={
+              user && user.role === "teacher" ? (
+                <TeacherDashboard user={user} logout={logout} />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+          <Route
+            path="/teacher/create"
+            element={
+              user && user.role === "teacher" ? (
+                <CreateTest user={user} />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+          <Route
+            path="/test/:testId"
+            element={
+              user ? <TakeTest user={user} /> : <Navigate to="/" />
+            }
+          />
+          <Route
+            path="/results/:testId"
+            element={
+              user ? <TestResults user={user} /> : <Navigate to="/" />
+            }
+          />
         </Routes>
       </BrowserRouter>
     </div>
