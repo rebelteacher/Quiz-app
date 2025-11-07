@@ -395,7 +395,7 @@ async def generate_more_questions(
         standards_text = ", ".join(existing_standards) if existing_standards else "relevant educational standards"
         
         # Prepare prompt
-        prompt = f\"\"\"Create {num_questions} NEW multiple choice questions based on the following resource:
+        prompt = f"""Create {num_questions} NEW multiple choice questions based on the following resource:
 
 Resource Description: {test["resource_description"]}
 Standards to cover: {standards_text}
@@ -418,7 +418,7 @@ Return ONLY a valid JSON array with this exact structure:
   }}
 ]
 
-Do not include any markdown formatting or explanatory text, just the JSON array.\"\"\"
+Do not include any markdown formatting or explanatory text, just the JSON array."""
         
         # If file is uploaded, include it
         file_contents = None
