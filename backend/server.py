@@ -70,7 +70,7 @@ class Assignment(BaseModel):
     model_config = ConfigDict(extra="ignore")
     id: str = Field(default_factory=lambda: str(uuid.uuid4()))
     test_id: str
-    student_emails: List[str]  # List of student emails
+    class_ids: List[str]  # List of class IDs
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
 class StudentAnswer(BaseModel):
