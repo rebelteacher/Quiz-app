@@ -644,12 +644,10 @@ async def get_class(class_id: str, teacher: User = Depends(require_teacher)):
     
     # Get student details
     students = []
-    for email in class_obj.get('student_emails', []):
-        student = await db.users.find_one({"email": email}, {"_id": 0, "id": 1, "name": 1, "email": 1})
+    for student_id in class_obj.get('student_ids', []):
+        student = await db.users.find_one({"id": student_id}, {"_id": 0, "id": 1, "name": 1, "email": 1})
         if student:
             students.append(student)
-        else:
-            students.append({"email": email, "name": email, "id": None})
     
     class_obj['students'] = students
     return class_obj
