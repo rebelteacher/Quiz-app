@@ -117,7 +117,7 @@ class GenerateTestRequest(BaseModel):
 
 class AssignTestRequest(BaseModel):
     test_id: str
-    student_emails: List[str]
+    class_ids: List[str]
 
 class SubmitTestRequest(BaseModel):
     test_id: str
