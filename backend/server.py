@@ -598,6 +598,276 @@ async def get_assignment(test_id: str, teacher: User = Depends(require_teacher))
         raise HTTPException(status_code=404, detail="Assignment not found")
     return assignment
 
+# ===== Class Management Routes =====
+@api_router.post("/classes")
+async def create_class(req: CreateClassRequest, teacher: User = Depends(require_teacher)):
+    class_obj = Class(
+        teacher_id=teacher.id,
+        name=req.name,
+        description=req.description,
+        student_emails=req.student_emails
+    )
+    
+    class_dict = class_obj.model_dump()
+    class_dict['created_at'] = class_dict['created_at'].isoformat()
+    await db.classes.insert_one(class_dict)
+    
+    return class_obj
+
+@api_router.get("/classes")
+async def get_classes(teacher: User = Depends(require_teacher)):
+    classes = await db.classes.find({"teacher_id": teacher.id}, {"_id": 0}).to_list(1000)
+    
+    # Enrich with student count
+    for cls in classes:
+        cls['student_count'] = len(cls.get('student_emails', []))
+    
+    return classes
+
+@api_router.get("/classes/{class_id}")
+async def get_class(class_id: str, teacher: User = Depends(require_teacher)):
+    class_obj = await db.classes.find_one({"id": class_id}, {"_id": 0})
+    if not class_obj:
+        raise HTTPException(status_code=404, detail="Class not found")
+    if class_obj["teacher_id"] != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Get student details
+    students = []
+    for email in class_obj.get('student_emails', []):
+        student = await db.users.find_one({"email": email}, {"_id": 0, "id": 1, "name": 1, "email": 1})
+        if student:
+            students.append(student)
+        else:
+            students.append({"email": email, "name": email, "id": None})
+    
+    class_obj['students'] = students
+    return class_obj
+
+@api_router.put("/classes/{class_id}")
+async def update_class(class_id: str, req: UpdateClassRequest, teacher: User = Depends(require_teacher)):
+    class_obj = await db.classes.find_one({"id": class_id})
+    if not class_obj:
+        raise HTTPException(status_code=404, detail="Class not found")
+    if class_obj["teacher_id"] != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    update_data = {}
+    if req.name is not None:
+        update_data['name'] = req.name
+    if req.description is not None:
+        update_data['description'] = req.description
+    if req.student_emails is not None:
+        update_data['student_emails'] = req.student_emails
+    
+    if update_data:
+        await db.classes.update_one({"id": class_id}, {"$set": update_data})
+    
+    updated_class = await db.classes.find_one({"id": class_id}, {"_id": 0})
+    return updated_class
+
+@api_router.delete("/classes/{class_id}")
+async def delete_class(class_id: str, teacher: User = Depends(require_teacher)):
+    class_obj = await db.classes.find_one({"id": class_id})
+    if not class_obj:
+        raise HTTPException(status_code=404, detail="Class not found")
+    if class_obj["teacher_id"] != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    await db.classes.delete_one({"id": class_id})
+    return {"message": "Class deleted"}
+
+# ===== Reports Routes =====
+@api_router.get("/reports/test/{test_id}")
+async def get_test_report(test_id: str, teacher: User = Depends(require_teacher)):
+    """Comprehensive test report with student grouping by proficiency"""
+    # Verify test belongs to teacher
+    test = await db.tests.find_one({"id": test_id})
+    if not test or test["teacher_id"] != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Get all submissions
+    submissions = await db.submissions.find({"test_id": test_id}, {"_id": 0}).to_list(1000)
+    
+    if not submissions:
+        return {
+            "test_id": test_id,
+            "test_title": test.get("title", ""),
+            "total_submissions": 0,
+            "class_average": 0,
+            "standards_overview": {},
+            "student_results": [],
+            "proficiency_groups": {
+                "advanced": [],
+                "proficient": [],
+                "basic": [],
+                "below_basic": []
+            },
+            "standards_proficiency_groups": {}
+        }
+    
+    # Enrich with student info
+    student_results = []
+    for sub in submissions:
+        student = await db.users.find_one({"id": sub["student_id"]}, {"_id": 0})
+        student_results.append({
+            **sub,
+            "student_name": student.get("name", "Unknown") if student else "Unknown",
+            "student_email": student.get("email", "") if student else ""
+        })
+    
+    # Calculate class average
+    class_average = sum(s["score"] for s in submissions) / len(submissions)
+    
+    # Standards overview
+    standards_data = {}
+    for sub in submissions:
+        for standard, stats in sub["standards_breakdown"].items():
+            if standard not in standards_data:
+                standards_data[standard] = {"correct": 0, "total": 0}
+            standards_data[standard]["correct"] += stats["correct"]
+            standards_data[standard]["total"] += stats["total"]
+    
+    for standard in standards_data:
+        data = standards_data[standard]
+        data["percentage"] = round((data["correct"] / data["total"]) * 100, 2) if data["total"] > 0 else 0
+    
+    # Group students by overall proficiency
+    proficiency_groups = {
+        "advanced": [],  # 90-100%
+        "proficient": [],  # 70-89%
+        "basic": [],  # 50-69%
+        "below_basic": []  # 0-49%
+    }
+    
+    for result in student_results:
+        score = result["score"]
+        student_info = {
+            "id": result["student_id"],
+            "name": result["student_name"],
+            "email": result["student_email"],
+            "score": score
+        }
+        
+        if score >= 90:
+            proficiency_groups["advanced"].append(student_info)
+        elif score >= 70:
+            proficiency_groups["proficient"].append(student_info)
+        elif score >= 50:
+            proficiency_groups["basic"].append(student_info)
+        else:
+            proficiency_groups["below_basic"].append(student_info)
+    
+    # Group students by standard proficiency
+    standards_proficiency_groups = {}
+    for standard in standards_data.keys():
+        standards_proficiency_groups[standard] = {
+            "advanced": [],
+            "proficient": [],
+            "basic": [],
+            "below_basic": []
+        }
+        
+        for result in student_results:
+            if standard in result["standards_breakdown"]:
+                std_stats = result["standards_breakdown"][standard]
+                student_info = {
+                    "id": result["student_id"],
+                    "name": result["student_name"],
+                    "email": result["student_email"],
+                    "percentage": std_stats["percentage"]
+                }
+                
+                pct = std_stats["percentage"]
+                if pct >= 90:
+                    standards_proficiency_groups[standard]["advanced"].append(student_info)
+                elif pct >= 70:
+                    standards_proficiency_groups[standard]["proficient"].append(student_info)
+                elif pct >= 50:
+                    standards_proficiency_groups[standard]["basic"].append(student_info)
+                else:
+                    standards_proficiency_groups[standard]["below_basic"].append(student_info)
+    
+    return {
+        "test_id": test_id,
+        "test_title": test.get("title", ""),
+        "total_submissions": len(submissions),
+        "class_average": round(class_average, 2),
+        "standards_overview": standards_data,
+        "student_results": student_results,
+        "proficiency_groups": proficiency_groups,
+        "standards_proficiency_groups": standards_proficiency_groups
+    }
+
+@api_router.get("/reports/student/{student_id}")
+async def get_student_report(student_id: str, teacher: User = Depends(require_teacher)):
+    """Overall student performance across all tests"""
+    # Get student info
+    student = await db.users.find_one({"id": student_id}, {"_id": 0})
+    if not student:
+        raise HTTPException(status_code=404, detail="Student not found")
+    
+    # Get all submissions for this student on teacher's tests
+    teacher_tests = await db.tests.find({"teacher_id": teacher.id}, {"_id": 0, "id": 1, "title": 1}).to_list(1000)
+    test_ids = [t["id"] for t in teacher_tests]
+    
+    submissions = await db.submissions.find({
+        "student_id": student_id,
+        "test_id": {"$in": test_ids}
+    }, {"_id": 0}).to_list(1000)
+    
+    if not submissions:
+        return {
+            "student_id": student_id,
+            "student_name": student.get("name", ""),
+            "student_email": student.get("email", ""),
+            "total_tests": 0,
+            "average_score": 0,
+            "overall_standards_performance": {},
+            "test_history": []
+        }
+    
+    # Calculate overall standards performance
+    standards_performance = {}
+    for sub in submissions:
+        for standard, stats in sub["standards_breakdown"].items():
+            if standard not in standards_performance:
+                standards_performance[standard] = {"correct": 0, "total": 0, "tests_count": 0}
+            standards_performance[standard]["correct"] += stats["correct"]
+            standards_performance[standard]["total"] += stats["total"]
+            standards_performance[standard]["tests_count"] += 1
+    
+    for standard in standards_performance:
+        data = standards_performance[standard]
+        data["percentage"] = round((data["correct"] / data["total"]) * 100, 2) if data["total"] > 0 else 0
+    
+    # Get test history with titles
+    test_history = []
+    for sub in submissions:
+        test = next((t for t in teacher_tests if t["id"] == sub["test_id"]), None)
+        test_history.append({
+            "test_id": sub["test_id"],
+            "test_title": test["title"] if test else "Unknown Test",
+            "score": sub["score"],
+            "submitted_at": sub["submitted_at"],
+            "standards_breakdown": sub["standards_breakdown"]
+        })
+    
+    # Sort by submission date
+    test_history.sort(key=lambda x: x["submitted_at"], reverse=True)
+    
+    average_score = sum(s["score"] for s in submissions) / len(submissions)
+    
+    return {
+        "student_id": student_id,
+        "student_name": student.get("name", ""),
+        "student_email": student.get("email", ""),
+        "total_tests": len(submissions),
+        "average_score": round(average_score, 2),
+        "overall_standards_performance": standards_performance,
+        "test_history": test_history
+    }
+
 # ===== Submission Routes =====
 @api_router.post("/submissions")
 async def submit_test(req: SubmitTestRequest, user: User = Depends(require_auth)):
