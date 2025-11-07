@@ -630,7 +630,7 @@ async def get_classes(teacher: User = Depends(require_teacher)):
     
     # Enrich with student count
     for cls in classes:
-        cls['student_count'] = len(cls.get('student_emails', []))
+        cls['student_count'] = len(cls.get('student_ids', []))
     
     return classes
 
