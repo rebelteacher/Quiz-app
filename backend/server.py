@@ -87,6 +87,25 @@ class Submission(BaseModel):
     standards_breakdown: Dict[str, Dict[str, Any]]  # {standard: {correct: int, total: int, percentage: float}}
     submitted_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
 
+class Class(BaseModel):
+    model_config = ConfigDict(extra="ignore")
+    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    teacher_id: str
+    name: str
+    description: Optional[str] = None
+    student_emails: List[str] = []
+    created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
+
+class CreateClassRequest(BaseModel):
+    name: str
+    description: Optional[str] = None
+    student_emails: List[str] = []
+
+class UpdateClassRequest(BaseModel):
+    name: Optional[str] = None
+    description: Optional[str] = None
+    student_emails: Optional[List[str]] = None
+
 # Request/Response Models
 class GenerateTestRequest(BaseModel):
     title: str
