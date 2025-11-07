@@ -579,20 +579,26 @@ async def assign_test(req: AssignTestRequest, teacher: User = Depends(require_te
     if test.get("status") != "published":
         raise HTTPException(status_code=400, detail="Cannot assign draft test. Please publish it first.")
     
+    # Verify all classes belong to teacher
+    for class_id in req.class_ids:
+        class_obj = await db.classes.find_one({"id": class_id})
+        if not class_obj or class_obj["teacher_id"] != teacher.id:
+            raise HTTPException(status_code=403, detail=f"Class {class_id} not found or not authorized")
+    
     # Create or update assignment
     existing = await db.assignments.find_one({"test_id": req.test_id})
     if existing:
-        # Update student list
+        # Update class list
         await db.assignments.update_one(
             {"test_id": req.test_id},
-            {"$set": {"student_emails": req.student_emails}}
+            {"$set": {"class_ids": req.class_ids}}
         )
-        existing["student_emails"] = req.student_emails
+        existing["class_ids"] = req.class_ids
         return existing
     else:
         assignment = Assignment(
             test_id=req.test_id,
-            student_emails=req.student_emails
+            class_ids=req.class_ids
         )
         assignment_dict = assignment.model_dump()
         assignment_dict['created_at'] = assignment_dict['created_at'].isoformat()
