@@ -226,6 +226,11 @@ h1, h2, h3, h4, h5, h6 {
   font-size: 0.875rem;
 }
 
+.btn-sm {
+  padding: 0.5rem 1rem;
+  font-size: 0.8125rem;
+}
+
 .btn-primary {
   background: linear-gradient(135deg, #ff8c42 0%, #ff6b9d 100%);
   color: white;
