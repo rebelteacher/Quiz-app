@@ -225,8 +225,15 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
       ) : tests.length === 0 ? (
         <div className="empty-state" data-testid="empty-tests">
           <div className="empty-icon">📝</div>
-          <h3>No Tests Assigned</h3>
-          <p>Your teacher hasn't assigned any tests yet. Check back later!</p>
+          <h3>No Tests Assigned Yet</h3>
+          <p>No tests have been assigned to your classes.</p>
+          {myClasses.length === 0 && (
+            <div style={{ marginTop: "1rem", padding: "1rem", background: "#fef3c7", borderRadius: "12px", fontSize: "0.875rem" }}>
+              <p style={{ color: "#92400e", margin: 0 }}>
+                💡 Join a class using the class code from your teacher to see assigned tests.
+              </p>
+            </div>
+          )}
         </div>
       ) : (
         <div className="tests-grid">
