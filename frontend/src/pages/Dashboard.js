@@ -68,11 +68,21 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
         withCredentials: true
       });
       console.log("Join class response:", response.data);
-      toast.success("Successfully joined class!");
+      
+      // Check if already enrolled
+      if (response.data.message === "Already enrolled in this class") {
+        toast.info("You're already in this class!");
+      } else {
+        toast.success("Successfully joined class! Refreshing...");
+      }
+      
       setShowJoinModal(false);
       setClassCode("");
-      fetchMyClasses();
-      fetchTests();
+      
+      // Wait a moment then reload to ensure data is fresh
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
     } catch (e) {
       console.error("Join class error:", e.response?.data || e.message);
       toast.error(e.response?.data?.detail || "Failed to join class. Please try again.");
