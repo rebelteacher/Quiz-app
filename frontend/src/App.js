@@ -16,6 +16,7 @@ import TestPreview from "./pages/TestPreview";
 import ClassManagement from "./pages/ClassManagement";
 import TestReport from "./pages/TestReport";
 import StudentReport from "./pages/StudentReport";
+import Analytics from "./pages/Analytics";
 import TakeTest from "./pages/TakeTest";
 import TestResults from "./pages/TestResults";
 
