@@ -4,6 +4,9 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import axios from "axios";
 import { Toaster, toast } from "sonner";
 
+// Configure axios to send credentials with all requests
+axios.defaults.withCredentials = true;
+
 // Import pages
 import LandingPage from "./pages/LandingPage";
 import Dashboard from "./pages/Dashboard";
