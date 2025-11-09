@@ -18,28 +18,40 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
   useEffect(() => {
     // Show role selector if role not set properly
     if (!user.role || user.role === "student") {
-      fetchTests();
-      fetchMyClasses();
+      loadStudentData();
+    } else {
+      setLoading(false);
     }
   }, []);
+
+  const loadStudentData = async () => {
+    try {
+      await Promise.all([fetchTests(), fetchMyClasses()]);
+    } catch (e) {
+      console.error("Error loading student data:", e);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const fetchTests = async () => {
     try {
       const response = await axios.get(`${API}/tests`);
+      console.log("Student tests:", response.data);
       setTests(response.data);
     } catch (e) {
+      console.error("Failed to load tests:", e);
       toast.error("Failed to load tests");
-    } finally {
-      setLoading(false);
     }
   };
 
   const fetchMyClasses = async () => {
     try {
       const response = await axios.get(`${API}/classes/student/my-classes`);
+      console.log("Student classes:", response.data);
       setMyClasses(response.data);
     } catch (e) {
-      console.error("Failed to load classes", e);
+      console.error("Failed to load classes:", e);
     }
   };
 
