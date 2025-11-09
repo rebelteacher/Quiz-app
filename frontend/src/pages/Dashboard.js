@@ -62,16 +62,20 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
     }
 
     try {
-      await axios.post(`${API}/classes/join`, {
+      const response = await axios.post(`${API}/classes/join`, {
         class_code: classCode.toUpperCase()
+      }, {
+        withCredentials: true
       });
+      console.log("Join class response:", response.data);
       toast.success("Successfully joined class!");
       setShowJoinModal(false);
       setClassCode("");
       fetchMyClasses();
       fetchTests();
     } catch (e) {
-      toast.error(e.response?.data?.detail || "Failed to join class");
+      console.error("Join class error:", e.response?.data || e.message);
+      toast.error(e.response?.data?.detail || "Failed to join class. Please try again.");
     }
   };
 
