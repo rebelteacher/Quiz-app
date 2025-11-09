@@ -90,11 +90,14 @@ const ClassManagement = ({ user }) => {
 
   const handleDeleteClass = async (classId) => {
     try {
-      await axios.delete(`${API}/classes/${classId}`);
+      await axios.delete(`${API}/classes/${classId}`, {
+        withCredentials: true
+      });
       toast.success("Class deleted");
       fetchClasses();
     } catch (e) {
-      toast.error("Failed to delete class");
+      console.error("Delete class error:", e);
+      toast.error(e.response?.data?.detail || "Failed to delete class");
     }
   };
 
