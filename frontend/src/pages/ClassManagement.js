@@ -147,7 +147,7 @@ const ClassManagement = ({ user }) => {
               onMouseLeave={(e) => e.currentTarget.style.transform = "scale(1)"}
               data-testid="class-code"
             >
-              {selectedClass.class_code}
+              {selectedClass.class_code || "Loading..."}
             </div>
             <p style={{ fontSize: "0.875rem", color: "#718096", marginTop: "1rem" }}>
               Click to copy • Share this code with students
