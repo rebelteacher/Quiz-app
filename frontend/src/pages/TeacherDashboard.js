@@ -129,6 +129,9 @@ const TeacherDashboard = ({ user, logout }) => {
           <button className="btn btn-secondary" onClick={() => navigate("/teacher/classes")} data-testid="classes-btn">
             Classes
           </button>
+          <button className="btn btn-secondary" onClick={() => navigate("/teacher/analytics")} data-testid="analytics-btn">
+            📊 Analytics
+          </button>
           <button className="btn btn-primary" onClick={() => navigate("/teacher/create")} data-testid="create-test-btn">
             + Create Test
           </button>
