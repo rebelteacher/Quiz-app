@@ -22,7 +22,9 @@ const ClassManagement = ({ user }) => {
 
   const fetchClasses = async () => {
     try {
-      const response = await axios.get(`${API}/classes`);
+      const response = await axios.get(`${API}/classes`, {
+        withCredentials: true
+      });
       console.log("Classes fetched:", response.data);
       // Ensure all classes have class_code
       const classesWithCodes = response.data.map(cls => {
