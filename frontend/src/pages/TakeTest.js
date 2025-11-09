@@ -51,9 +51,8 @@ const TakeTest = ({ user }) => {
     const unanswered = test.questions.filter(q => answers[q.id] === undefined);
     
     if (unanswered.length > 0) {
-      if (!window.confirm(`You have ${unanswered.length} unanswered questions. Submit anyway?`)) {
-        return;
-      }
+      toast.warning(`Warning: You have ${unanswered.length} unanswered questions`);
+      // Still allow submission
     }
     
     setSubmitting(true);
