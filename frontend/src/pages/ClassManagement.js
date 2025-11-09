@@ -82,8 +82,6 @@ const ClassManagement = ({ user }) => {
   };
 
   const handleDeleteClass = async (classId) => {
-    if (!window.confirm("Delete this class? This won't remove students from the system.")) return;
-
     try {
       await axios.delete(`${API}/classes/${classId}`);
       toast.success("Class deleted");
