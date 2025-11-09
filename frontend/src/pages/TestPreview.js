@@ -30,8 +30,12 @@ const TestPreview = ({ user }) => {
     }
   };
 
-  const handleDeleteQuestion = async (questionId) => {
-    if (!window.confirm("Remove this question from the test?")) return;
+  const handleDeleteQuestion = async (questionId, e) => {
+    // Prevent any event bubbling
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
     
     try {
       const response = await axios.delete(`${API}/tests/${testId}/questions/${questionId}`, {
