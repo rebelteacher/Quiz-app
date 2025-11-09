@@ -237,7 +237,18 @@ const ClassManagement = ({ user }) => {
             >
               <div className="test-card-header">
                 <h3>{cls.name}</h3>
-                <span className="test-badge badge-complete">{cls.class_code}</span>
+                <span 
+                  className="test-badge badge-complete"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    copyClassCode(cls.class_code);
+                  }}
+                  style={{ cursor: "pointer" }}
+                  title="Click to copy code"
+                  data-testid={`class-code-badge-${cls.id}`}
+                >
+                  {cls.class_code}
+                </span>
               </div>
               <p>{cls.description || "No description"}</p>
               <div className="test-meta">
@@ -248,11 +259,21 @@ const ClassManagement = ({ user }) => {
                   className="btn btn-primary btn-sm"
                   onClick={(e) => {
                     e.stopPropagation();
+                    copyClassCode(cls.class_code);
+                  }}
+                  data-testid={`copy-code-btn-${cls.id}`}
+                >
+                  Copy Code
+                </button>
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
                     viewClassDetails(cls);
                   }}
                   data-testid={`view-class-btn-${cls.id}`}
                 >
-                  View Details
+                  View Students
                 </button>
                 <button
                   className="btn btn-secondary btn-sm"
