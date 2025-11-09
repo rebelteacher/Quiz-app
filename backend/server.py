@@ -586,15 +586,16 @@ async def assign_test(req: AssignTestRequest, teacher: User = Depends(require_te
             raise HTTPException(status_code=403, detail=f"Class {class_id} not found or not authorized")
     
     # Create or update assignment
-    existing = await db.assignments.find_one({"test_id": req.test_id})
+    existing = await db.assignments.find_one({"test_id": req.test_id}, {"_id": 0})
     if existing:
         # Update class list
         await db.assignments.update_one(
             {"test_id": req.test_id},
             {"$set": {"class_ids": req.class_ids}}
         )
-        existing["class_ids"] = req.class_ids
-        return existing
+        # Return updated assignment without _id
+        updated = await db.assignments.find_one({"test_id": req.test_id}, {"_id": 0})
+        return updated
     else:
         assignment = Assignment(
             test_id=req.test_id,
