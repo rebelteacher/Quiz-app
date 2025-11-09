@@ -25,6 +25,7 @@ const GRADE_LEVELS = [
 
 const STATE_STANDARDS = [
   "Common Core State Standards",
+  "Mississippi College and Career Readiness Standards",
   "Texas TEKS",
   "California Standards",
   "Florida Standards",
