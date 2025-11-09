@@ -6,11 +6,40 @@ import { toast } from "sonner";
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
+const GRADE_LEVELS = [
+  "Kindergarten",
+  "1st Grade",
+  "2nd Grade",
+  "3rd Grade",
+  "4th Grade",
+  "5th Grade",
+  "6th Grade",
+  "7th Grade",
+  "8th Grade",
+  "9th Grade",
+  "10th Grade",
+  "11th Grade",
+  "12th Grade",
+  "College"
+];
+
+const STATE_STANDARDS = [
+  "Common Core State Standards",
+  "Texas TEKS",
+  "California Standards",
+  "Florida Standards",
+  "New York Standards",
+  "NGSS (Science)",
+  "Other"
+];
+
 const CreateTest = ({ user }) => {
   const navigate = useNavigate();
   const [title, setTitle] = useState("");
   const [resourceDescription, setResourceDescription] = useState("");
   const [numQuestions, setNumQuestions] = useState(20);
+  const [gradeLevel, setGradeLevel] = useState("");
+  const [stateStandards, setStateStandards] = useState("Common Core State Standards");
   const [standards, setStandards] = useState("");
   const [file, setFile] = useState(null);
   const [generating, setGenerating] = useState(false);
@@ -28,6 +57,11 @@ const CreateTest = ({ user }) => {
       toast.error("Please fill in all required fields");
       return;
     }
+
+    if (!gradeLevel) {
+      toast.error("Please select a grade level");
+      return;
+    }
     
     setGenerating(true);
     
@@ -36,6 +70,8 @@ const CreateTest = ({ user }) => {
       formData.append("title", title);
       formData.append("resource_description", resourceDescription);
       formData.append("num_questions", numQuestions.toString());
+      formData.append("grade_level", gradeLevel);
+      formData.append("state_standards", stateStandards);
       if (standards) {
         formData.append("standards", standards);
       }
@@ -64,11 +100,11 @@ const CreateTest = ({ user }) => {
       <div className="dashboard-header">
         <div className="header-left">
           <h1>Create New Test</h1>
-          <p>AI will generate questions from your resources</p>
+          <p>AI will generate questions aligned with standards</p>
         </div>
         <div className="header-right">
-          <button className="btn btn-secondary" onClick={() => navigate("/teacher")} data-testid="back-btn">
-            ← Back
+          <button className="btn btn-secondary" onClick={() => navigate("/teacher")} data-testid="dashboard-btn">
+            ← Dashboard
           </button>
         </div>
       </div>
@@ -87,6 +123,41 @@ const CreateTest = ({ user }) => {
                 required
                 data-testid="test-title-input"
               />
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+              <div className="form-group">
+                <label>Grade Level *</label>
+                <select
+                  className="form-input"
+                  value={gradeLevel}
+                  onChange={(e) => setGradeLevel(e.target.value)}
+                  required
+                  data-testid="grade-level-select"
+                  style={{ cursor: "pointer" }}
+                >
+                  <option value="">Select Grade Level</option>
+                  {GRADE_LEVELS.map(level => (
+                    <option key={level} value={level}>{level}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label>State Standards *</label>
+                <select
+                  className="form-input"
+                  value={stateStandards}
+                  onChange={(e) => setStateStandards(e.target.value)}
+                  required
+                  data-testid="state-standards-select"
+                  style={{ cursor: "pointer" }}
+                >
+                  {STATE_STANDARDS.map(standard => (
+                    <option key={standard} value={standard}>{standard}</option>
+                  ))}
+                </select>
+              </div>
             </div>
 
             <div className="form-group">
@@ -130,17 +201,17 @@ const CreateTest = ({ user }) => {
             </div>
 
             <div className="form-group">
-              <label>Standards (Optional)</label>
+              <label>Specific Standards (Optional)</label>
               <input
                 type="text"
                 className="form-input"
                 value={standards}
                 onChange={(e) => setStandards(e.target.value)}
-                placeholder="e.g., CCSS.Math.3.OA, NGSS.MS-PS1"
+                placeholder="e.g., CCSS.Math.3.OA.A.1, CCSS.Math.3.OA.A.2"
                 data-testid="standards-input"
               />
               <p style={{ fontSize: "0.75rem", color: "#718096", marginTop: "0.5rem" }}>
-                Specify learning standards to tag questions with
+                AI will automatically select appropriate standards, or you can specify specific ones
               </p>
             </div>
 
@@ -164,13 +235,13 @@ const CreateTest = ({ user }) => {
         </div>
 
         <div style={{ background: "white", padding: "1.5rem", borderRadius: "16px", boxShadow: "0 4px 15px rgba(0,0,0,0.08)", marginTop: "1.5rem" }}>
-          <h3 style={{ fontSize: "1rem", marginBottom: "0.75rem", color: "#2d3748" }}>✨ How it works</h3>
+          <h3 style={{ fontSize: "1rem", marginBottom: "0.75rem", color: "#2d3748" }}>✨ Standards-Aligned Assessment</h3>
           <ul style={{ color: "#718096", fontSize: "0.875rem", paddingLeft: "1.5rem", lineHeight: "1.8" }}>
-            <li>Describe your teaching resources or upload files</li>
-            <li>AI generates high-quality multiple choice questions</li>
-            <li>Questions are tagged with relevant standards</li>
-            <li>Each test is automatically randomized for students</li>
-            <li>Get instant grading and standards-based analytics</li>
+            <li>Questions aligned with selected grade level and state standards</li>
+            <li>Each question tagged with specific standard code</li>
+            <li>Automatic tracking of student performance by standard</li>
+            <li>Historical data analysis and trend predictions</li>
+            <li>Identify standards needing additional instruction</li>
           </ul>
         </div>
       </div>
