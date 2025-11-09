@@ -82,16 +82,19 @@ const TeacherDashboard = ({ user, logout }) => {
     }
     
     try {
-      await axios.post(`${API}/assignments`, {
+      const response = await axios.post(`${API}/assignments`, {
         test_id: assignTestId,
         class_ids: selectedClassIds
       });
+      console.log("Assignment successful:", response.data);
       toast.success("Test assigned to selected classes");
       setShowAssignModal(false);
       setAssignTestId(null);
       setSelectedClassIds([]);
     } catch (e) {
-      toast.error(e.response?.data?.detail || "Failed to assign test");
+      console.error("Assignment error:", e.response?.data || e.message);
+      const errorMsg = e.response?.data?.detail || "Failed to assign test. Please try again.";
+      toast.error(errorMsg);
     }
   };
 
