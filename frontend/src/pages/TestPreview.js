@@ -181,20 +181,21 @@ const TestPreview = ({ user }) => {
                   </p>
                 </div>
                 <button
-                  onClick={() => handleDeleteQuestion(question.id)}
+                  onClick={(e) => handleDeleteQuestion(question.id, e)}
                   style={{
                     background: "none",
                     border: "none",
                     color: "#ef4444",
                     cursor: "pointer",
-                    fontSize: "1.25rem",
+                    fontSize: "1.5rem",
                     padding: "0.5rem",
-                    lineHeight: 1
+                    lineHeight: 1,
+                    fontWeight: "bold"
                   }}
                   data-testid={`delete-question-${index}`}
-                  title="Remove question"
+                  title="Click to remove this question"
                 >
-                  ×
+                  ✕
                 </button>
               </div>
               
