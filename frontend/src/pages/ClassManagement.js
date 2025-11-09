@@ -67,19 +67,24 @@ const ClassManagement = ({ user }) => {
         await axios.put(`${API}/classes/${editingClass.id}`, {
           name: className,
           description: classDescription,
+        }, {
+          withCredentials: true
         });
         toast.success("Class updated");
       } else {
         await axios.post(`${API}/classes`, {
           name: className,
           description: classDescription,
+        }, {
+          withCredentials: true
         });
         toast.success("Class created! Share the class code with students.");
       }
       setShowModal(false);
       fetchClasses();
     } catch (e) {
-      toast.error("Failed to save class");
+      console.error("Save class error:", e);
+      toast.error(e.response?.data?.detail || "Failed to save class");
     }
   };
 
