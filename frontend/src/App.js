@@ -186,6 +186,16 @@ function App() {
             }
           />
           <Route
+            path="/teacher/analytics"
+            element={
+              user && user.role === "teacher" ? (
+                <Analytics user={user} />
+              ) : (
+                <Navigate to="/" />
+              )
+            }
+          />
+          <Route
             path="/test/:testId"
             element={
               user ? <TakeTest user={user} /> : <Navigate to="/" />
