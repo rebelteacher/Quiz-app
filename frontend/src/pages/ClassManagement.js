@@ -87,9 +87,19 @@ const ClassManagement = ({ user }) => {
   const viewClassDetails = async (classObj) => {
     try {
       const response = await axios.get(`${API}/classes/${classObj.id}`);
-      setSelectedClass(response.data);
+      // Merge the response with the original classObj to ensure we have class_code
+      setSelectedClass({
+        ...classObj,
+        ...response.data
+      });
     } catch (e) {
+      console.error("Failed to load class details:", e);
       toast.error("Failed to load class details");
+      // Fallback to using what we have
+      setSelectedClass({
+        ...classObj,
+        students: []
+      });
     }
   };
 
