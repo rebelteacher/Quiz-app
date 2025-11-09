@@ -34,11 +34,15 @@ const TestPreview = ({ user }) => {
     if (!window.confirm("Remove this question from the test?")) return;
     
     try {
-      await axios.delete(`${API}/tests/${testId}/questions/${questionId}`);
+      const response = await axios.delete(`${API}/tests/${testId}/questions/${questionId}`, {
+        withCredentials: true
+      });
+      console.log("Delete response:", response.data);
       toast.success("Question removed");
       fetchTest();
     } catch (e) {
-      toast.error("Failed to remove question");
+      console.error("Delete question error:", e.response?.data || e.message);
+      toast.error(e.response?.data?.detail || "Failed to remove question. Please try again.");
     }
   };
 
