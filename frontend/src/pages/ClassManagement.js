@@ -94,6 +94,10 @@ const ClassManagement = ({ user }) => {
   };
 
   const copyClassCode = (code) => {
+    if (!code || code === 'undefined') {
+      toast.error("Class code not available");
+      return;
+    }
     navigator.clipboard.writeText(code);
     toast.success("Class code copied to clipboard!");
   };
