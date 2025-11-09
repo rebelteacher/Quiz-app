@@ -182,10 +182,14 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
           </button>
           <button 
             className="btn btn-secondary" 
-            onClick={() => setShowRoleSelector(true)}
+            onClick={() => {
+              toast.info("Switching to teacher view...");
+              setShowRoleSelector(true);
+            }}
             data-testid="switch-role-btn"
+            title="Switch between student and teacher views"
           >
-            Switch to Teacher
+            🔄 Switch Role
           </button>
           <button className="btn btn-secondary" onClick={logout} data-testid="logout-btn">
             Logout
