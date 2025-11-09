@@ -43,7 +43,6 @@ const TeacherDashboard = ({ user, logout }) => {
 
   const handleDeleteTest = async (testId, e) => {
     e.stopPropagation();
-    if (!window.confirm("Are you sure you want to delete this test?")) return;
     
     try {
       await axios.delete(`${API}/tests/${testId}`);
