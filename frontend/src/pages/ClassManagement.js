@@ -23,8 +23,17 @@ const ClassManagement = ({ user }) => {
   const fetchClasses = async () => {
     try {
       const response = await axios.get(`${API}/classes`);
-      setClasses(response.data);
+      console.log("Classes fetched:", response.data);
+      // Ensure all classes have class_code
+      const classesWithCodes = response.data.map(cls => {
+        if (!cls.class_code) {
+          console.warn("Class missing code:", cls.name);
+        }
+        return cls;
+      });
+      setClasses(classesWithCodes);
     } catch (e) {
+      console.error("Failed to load classes:", e);
       toast.error("Failed to load classes");
     } finally {
       setLoading(false);
