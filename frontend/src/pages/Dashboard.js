@@ -127,6 +127,10 @@ const Dashboard = ({ user, logout, updateUserRole }) => {
         <div className="role-selector" data-testid="role-selector">
           <h2>Choose Your Role</h2>
           <p>Are you a teacher creating tests or a student taking tests?</p>
+          <div style={{ background: "#fef3c7", padding: "1rem", borderRadius: "8px", marginBottom: "1rem", fontSize: "0.875rem" }}>
+            <strong style={{ color: "#92400e" }}>Note:</strong>
+            <span style={{ color: "#78350f" }}> As a <strong>student</strong>, you join classes and take tests. As a <strong>teacher</strong>, you create tests and view analytics.</span>
+          </div>
           <div className="role-buttons">
             <button 
               className="role-button" 
