@@ -231,9 +231,23 @@ const TeacherDashboard = ({ user, logout }) => {
             <div className="form-group">
               <label>Select Classes</label>
               {classes.length === 0 ? (
-                <p style={{ color: "#718096", fontSize: "0.875rem", padding: "1rem", background: "#f7fafc", borderRadius: "8px" }}>
-                  No classes yet. Create a class first!
-                </p>
+                <div style={{ padding: "1.5rem", background: "#fef3c7", borderRadius: "8px", border: "1px solid #fbbf24" }}>
+                  <p style={{ color: "#92400e", fontSize: "0.875rem", fontWeight: "500", marginBottom: "0.5rem" }}>
+                    ⚠️ No Classes Available
+                  </p>
+                  <p style={{ color: "#78350f", fontSize: "0.8125rem", marginBottom: "1rem" }}>
+                    You need to create at least one class before assigning tests.
+                  </p>
+                  <button 
+                    className="btn btn-primary btn-sm"
+                    onClick={() => {
+                      setShowAssignModal(false);
+                      navigate("/teacher/classes");
+                    }}
+                  >
+                    Go to Classes
+                  </button>
+                </div>
               ) : (
                 <div style={{ display: "grid", gap: "0.75rem", maxHeight: "300px", overflowY: "auto" }}>
                   {classes.map((cls) => (
