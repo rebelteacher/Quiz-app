@@ -115,6 +115,8 @@ class GenerateTestRequest(BaseModel):
     title: str
     resource_description: str
     num_questions: int = 20
+    grade_level: Optional[str] = None
+    state_standards: Optional[str] = None
     standards: Optional[str] = None
 
 class AssignTestRequest(BaseModel):
