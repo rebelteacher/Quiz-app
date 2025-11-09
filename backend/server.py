@@ -753,6 +753,190 @@ async def delete_class(class_id: str, teacher: User = Depends(require_teacher)):
     await db.classes.delete_one({"id": class_id})
     return {"message": "Class deleted"}
 
+# ===== Analytics Routes =====
+@api_router.get("/analytics/standards-over-time")
+async def get_standards_over_time(teacher: User = Depends(require_teacher)):
+    """Get historical performance data for all standards"""
+    # Get all teacher's tests
+    tests = await db.tests.find({"teacher_id": teacher.id, "status": "published"}, {"_id": 0}).to_list(1000)
+    test_ids = [t["id"] for t in tests]
+    
+    # Get all submissions
+    submissions = await db.submissions.find({"test_id": {"$in": test_ids}}, {"_id": 0}).to_list(1000)
+    
+    if not submissions:
+        return {"standards": [], "timeline": []}
+    
+    # Organize by standard and time
+    standards_timeline = {}
+    
+    for sub in submissions:
+        submission_date = sub["submitted_at"]
+        for standard, stats in sub["standards_breakdown"].items():
+            if standard not in standards_timeline:
+                standards_timeline[standard] = []
+            
+            standards_timeline[standard].append({
+                "date": submission_date,
+                "percentage": stats["percentage"],
+                "correct": stats["correct"],
+                "total": stats["total"]
+            })
+    
+    # Calculate trends
+    standards_data = []
+    for standard, data_points in standards_timeline.items():
+        # Sort by date
+        sorted_points = sorted(data_points, key=lambda x: x["date"])
+        
+        # Calculate average and trend
+        percentages = [p["percentage"] for p in sorted_points]
+        avg_performance = sum(percentages) / len(percentages) if percentages else 0
+        
+        # Simple trend: compare first half to second half
+        mid = len(percentages) // 2
+        if mid > 0:
+            first_half_avg = sum(percentages[:mid]) / mid
+            second_half_avg = sum(percentages[mid:]) / (len(percentages) - mid)
+            trend = "improving" if second_half_avg > first_half_avg + 5 else "declining" if second_half_avg < first_half_avg - 5 else "stable"
+        else:
+            trend = "insufficient_data"
+        
+        standards_data.append({
+            "standard": standard,
+            "average_performance": round(avg_performance, 2),
+            "total_attempts": len(sorted_points),
+            "trend": trend,
+            "timeline": sorted_points,
+            "latest_performance": percentages[-1] if percentages else 0
+        })
+    
+    # Sort by average performance
+    standards_data.sort(key=lambda x: x["average_performance"])
+    
+    return {
+        "standards": standards_data,
+        "summary": {
+            "total_standards_tracked": len(standards_data),
+            "total_submissions": len(submissions),
+            "standards_needing_attention": [s for s in standards_data if s["average_performance"] < 70]
+        }
+    }
+
+@api_router.get("/analytics/class-progress/{class_id}")
+async def get_class_progress(class_id: str, teacher: User = Depends(require_teacher)):
+    """Get progress over time for a specific class"""
+    # Verify class belongs to teacher
+    class_obj = await db.classes.find_one({"id": class_id})
+    if not class_obj or class_obj["teacher_id"] != teacher.id:
+        raise HTTPException(status_code=403, detail="Not authorized")
+    
+    # Get students in class
+    student_ids = class_obj.get("student_ids", [])
+    
+    # Get all submissions from these students
+    submissions = await db.submissions.find({"student_id": {"$in": student_ids}}, {"_id": 0}).to_list(1000)
+    
+    if not submissions:
+        return {"message": "No data yet", "students": []}
+    
+    # Organize by student
+    student_progress = {}
+    for sub in submissions:
+        student_id = sub["student_id"]
+        if student_id not in student_progress:
+            student = await db.users.find_one({"id": student_id}, {"_id": 0, "name": 1, "email": 1})
+            student_progress[student_id] = {
+                "student_id": student_id,
+                "student_name": student.get("name", "Unknown") if student else "Unknown",
+                "submissions": [],
+                "average_score": 0,
+                "improvement_rate": 0
+            }
+        
+        student_progress[student_id]["submissions"].append({
+            "date": sub["submitted_at"],
+            "score": sub["score"],
+            "test_id": sub["test_id"]
+        })
+    
+    # Calculate trends for each student
+    for student_id, data in student_progress.items():
+        submissions_sorted = sorted(data["submissions"], key=lambda x: x["date"])
+        scores = [s["score"] for s in submissions_sorted]
+        
+        data["average_score"] = round(sum(scores) / len(scores), 2) if scores else 0
+        
+        # Calculate improvement rate
+        if len(scores) >= 2:
+            first_score = scores[0]
+            last_score = scores[-1]
+            data["improvement_rate"] = round(last_score - first_score, 2)
+        
+        data["submissions"] = submissions_sorted
+    
+    return {
+        "class_id": class_id,
+        "class_name": class_obj.get("name"),
+        "students": list(student_progress.values()),
+        "class_average": round(sum(s["average_score"] for s in student_progress.values()) / len(student_progress), 2) if student_progress else 0
+    }
+
+@api_router.get("/analytics/predictions/{standard}")
+async def get_standard_predictions(standard: str, teacher: User = Depends(require_teacher)):
+    """Predict future performance on a specific standard"""
+    # Get all submissions with this standard
+    tests = await db.tests.find({"teacher_id": teacher.id}, {"_id": 0}).to_list(1000)
+    test_ids = [t["id"] for t in tests]
+    
+    submissions = await db.submissions.find({"test_id": {"$in": test_ids}}, {"_id": 0}).to_list(1000)
+    
+    # Filter submissions that have this standard
+    relevant_data = []
+    for sub in submissions:
+        if standard in sub["standards_breakdown"]:
+            relevant_data.append({
+                "date": sub["submitted_at"],
+                "percentage": sub["standards_breakdown"][standard]["percentage"],
+                "student_id": sub["student_id"]
+            })
+    
+    if len(relevant_data) < 3:
+        return {"message": "Insufficient data for predictions", "prediction": None}
+    
+    # Sort by date
+    relevant_data.sort(key=lambda x: x["date"])
+    
+    # Simple linear regression for prediction
+    scores = [d["percentage"] for d in relevant_data]
+    avg_current = sum(scores[-5:]) / min(5, len(scores))  # Last 5 submissions average
+    
+    # Calculate trend
+    if len(scores) >= 6:
+        recent_avg = sum(scores[-3:]) / 3
+        older_avg = sum(scores[-6:-3]) / 3
+        trend_direction = "improving" if recent_avg > older_avg else "declining"
+        trend_magnitude = abs(recent_avg - older_avg)
+        
+        # Simple prediction: project forward
+        predicted_score = recent_avg + (recent_avg - older_avg)
+        predicted_score = max(0, min(100, predicted_score))  # Clamp to 0-100
+    else:
+        trend_direction = "stable"
+        trend_magnitude = 0
+        predicted_score = avg_current
+    
+    return {
+        "standard": standard,
+        "current_average": round(avg_current, 2),
+        "predicted_score": round(predicted_score, 2),
+        "trend": trend_direction,
+        "trend_magnitude": round(trend_magnitude, 2),
+        "confidence": "high" if len(relevant_data) >= 10 else "medium" if len(relevant_data) >= 5 else "low",
+        "data_points": len(relevant_data),
+        "recommendation": "Continue current approach" if predicted_score >= 70 else "Needs intervention and additional practice"
+    }
+
 # ===== Reports Routes =====
 @api_router.get("/reports/test/{test_id}")
 async def get_test_report(test_id: str, teacher: User = Depends(require_teacher)):
