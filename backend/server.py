@@ -271,6 +271,8 @@ async def generate_test(
     title: str = File(...),
     resource_description: str = File(...),
     num_questions: int = File(20),
+    grade_level: Optional[str] = File(None),
+    state_standards: Optional[str] = File(None),
     standards: Optional[str] = File(None),
     file: Optional[UploadFile] = File(None),
     teacher: User = Depends(require_teacher)
@@ -283,17 +285,34 @@ async def generate_test(
             system_message="You are an expert educational content creator. Generate high-quality multiple choice questions based on the provided resources."
         ).with_model("gemini", "gemini-2.0-flash")
         
+        # Build context for standards
+        standards_context = []
+        if grade_level:
+            standards_context.append(f"Grade Level: {grade_level}")
+        if state_standards:
+            standards_context.append(f"State Standards: {state_standards}")
+        if standards:
+            standards_context.append(f"Specific Standards: {standards}")
+        
+        standards_text = "\n".join(standards_context) if standards_context else "Use appropriate educational standards"
+        
         # Prepare prompt
         prompt = f"""Create {num_questions} multiple choice questions based on the following resource:
 
 Resource Description: {resource_description}
-{f'Standards to cover: {standards}' if standards else ''}
+
+{standards_text}
+
+IMPORTANT: 
+- Questions should be appropriate for {grade_level if grade_level else 'the appropriate grade level'}
+- Use {state_standards if state_standards else 'Common Core'} standard codes
+- Ensure questions align with the specified standards
 
 For each question:
-1. Write a clear, appropriate-level question
+1. Write a clear, grade-appropriate question
 2. Provide exactly 4 answer options
 3. Indicate which option is correct (0-3)
-4. Tag with the relevant standard
+4. Tag with the specific standard code (e.g., CCSS.Math.3.OA.A.1)
 
 Return ONLY a valid JSON array with this exact structure:
 [
@@ -301,7 +320,7 @@ Return ONLY a valid JSON array with this exact structure:
     "question_text": "Question here?",
     "options": ["Option A", "Option B", "Option C", "Option D"],
     "correct_answer": 0,
-    "standard": "Standard code (e.g., CCSS.Math.3.OA.A.1)"
+    "standard": "Full standard code with grade level"
   }}
 ]
 
