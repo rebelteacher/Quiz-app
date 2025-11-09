@@ -70,11 +70,18 @@ function App() {
 
   const logout = async () => {
     try {
-      await axios.post(`${API}/auth/logout`);
+      await axios.post(`${API}/auth/logout`, {}, {
+        withCredentials: true
+      });
       setUser(null);
       toast.success("Logged out successfully");
+      // Redirect to landing page
+      window.location.href = "/";
     } catch (e) {
-      toast.error("Logout failed");
+      console.error("Logout error:", e);
+      // Still log them out on frontend even if backend fails
+      setUser(null);
+      window.location.href = "/";
     }
   };
 
