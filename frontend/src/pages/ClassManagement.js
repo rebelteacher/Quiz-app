@@ -252,11 +252,11 @@ const ClassManagement = ({ user }) => {
                     e.stopPropagation();
                     copyClassCode(cls.class_code);
                   }}
-                  style={{ cursor: "pointer" }}
-                  title="Click to copy code"
+                  style={{ cursor: "pointer", fontWeight: "700", fontSize: "0.875rem" }}
+                  title={`Click to copy: ${cls.class_code || 'Loading...'}`}
                   data-testid={`class-code-badge-${cls.id}`}
                 >
-                  {cls.class_code}
+                  {cls.class_code || "Loading..."}
                 </span>
               </div>
               <p>{cls.description || "No description"}</p>
