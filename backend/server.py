@@ -372,6 +372,8 @@ Do not include any markdown formatting or explanatory text, just the JSON array.
             title=title,
             teacher_id=teacher.id,
             resource_description=resource_description,
+            grade_level=grade_level,
+            state_standards=state_standards,
             questions=questions
         )
         
