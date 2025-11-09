@@ -62,6 +62,8 @@ class Test(BaseModel):
     title: str
     teacher_id: str
     resource_description: str
+    grade_level: Optional[str] = None  # e.g., "3rd Grade", "High School"
+    state_standards: Optional[str] = None  # e.g., "Common Core", "Texas TEKS"
     questions: List[Question]
     status: str = "draft"  # "draft" or "published"
     created_at: datetime = Field(default_factory=lambda: datetime.now(timezone.utc))
